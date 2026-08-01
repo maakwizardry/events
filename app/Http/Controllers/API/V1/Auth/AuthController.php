@@ -9,12 +9,51 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
-    /**
-     * Register a new user
-     */
+    #[OA\Post(
+        path: '/auth/register',
+        tags: ['Authentication'],
+        summary: 'Register a new user',
+        description: 'Create a new user account and receive an authentication token',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'email', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'password123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'User registered successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'User registered successfully'),
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                        new OA\Property(property: 'token', type: 'string', example: '1|abcdef123456...'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validation error')
+        ]
+    )]
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -43,9 +82,44 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Login user
-     */
+    #[OA\Post(
+        path: '/auth/login',
+        tags: ['Authentication'],
+        summary: 'Login user',
+        description: 'Authenticate user and receive an authentication token',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john@example.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Login successful'),
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                            ]
+                        ),
+                        new OA\Property(property: 'token', type: 'string', example: '2|xyz789...'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Invalid credentials')
+        ]
+    )]
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -75,9 +149,23 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout user (revoke current token)
-     */
+    #[OA\Post(
+        path: '/auth/logout',
+        tags: ['Authentication'],
+        summary: 'Logout user',
+        security: [['sanctum' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Logged out successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Logged out successfully'),
+                    ]
+                )
+            )
+        ]
+    )]
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -87,9 +175,32 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get authenticated user
-     */
+    #[OA\Get(
+        path: '/auth/me',
+        tags: ['Authentication'],
+        summary: 'Get current user',
+        security: [['sanctum' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Current user details',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'user',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+                                new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+                                new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                    ]
+                )
+            )
+        ]
+    )]
     public function me(Request $request)
     {
         return response()->json([
