@@ -6,6 +6,8 @@ use App\Http\Controllers\API\V1\Event\TicketTypeController;
 use App\Http\Controllers\API\V1\Organization\OrganizationController;
 use App\Http\Controllers\API\V1\Organization\MemberController;
 use App\Http\Controllers\API\V1\Public\PublicEventController;
+use App\Http\Controllers\API\V1\Public\PublicRegistrationController;
+use App\Http\Controllers\API\V1\Registration\RegistrationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,7 +46,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Public event discovery endpoints
-    Route::prefix('events')->group(function () {
+    Route::prefix('public/events')->group(function () {
         Route::get('/', [PublicEventController::class, 'index']);
         Route::get('/{event:uuid}', [PublicEventController::class, 'show']);
         Route::get('/{event:uuid}/availability', [PublicEventController::class, 'availability']);
@@ -52,7 +54,13 @@ Route::prefix('v1')->group(function () {
         // Public ticket types
         Route::get('/{event:uuid}/ticket-types', [TicketTypeController::class, 'index']);
         Route::get('/{event:uuid}/ticket-types/{ticketType}', [TicketTypeController::class, 'show']);
+
+        // Public registration
+        Route::post('/{event:uuid}/register', [PublicRegistrationController::class, 'register']);
     });
+
+    // Public registration lookup
+    Route::get('/public/registrations/{registration:uuid}', [PublicRegistrationController::class, 'show']);
 
     // Protected routes (Sanctum authentication required)
     Route::middleware('auth:sanctum')->group(function () {
@@ -80,6 +88,17 @@ Route::prefix('v1')->group(function () {
             Route::post('/{event:uuid}/ticket-types', [TicketTypeController::class, 'store']);
             Route::put('/{event:uuid}/ticket-types/{ticketType}', [TicketTypeController::class, 'update']);
             Route::delete('/{event:uuid}/ticket-types/{ticketType}', [TicketTypeController::class, 'destroy']);
+
         });
+
+        // User Registrations
+        Route::prefix('registrations')->group(function () {
+            Route::get('/', [RegistrationController::class, 'index']);
+            Route::get('/{registration:uuid}', [RegistrationController::class, 'show']);
+            Route::post('/{registration:uuid}/cancel', [RegistrationController::class, 'cancel']);
+        });
+
+        // Authenticated user registration for events
+        Route::post('/events/{event:uuid}/register', [RegistrationController::class, 'store']);
     });
 });
