@@ -96,4 +96,21 @@ class TicketType extends Model
 
         return max(0, $this->quantity - $this->quantity_sold);
     }
+
+    public function isOnSale(): bool
+    {
+        $now = now();
+
+        // Check if sales have started
+        if ($this->sales_start_at && $now->lt($this->sales_start_at)) {
+            return false;
+        }
+
+        // Check if sales have ended
+        if ($this->sales_end_at && $now->gt($this->sales_end_at)) {
+            return false;
+        }
+
+        return true;
+    }
 }

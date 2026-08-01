@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\V1\Auth\AuthController;
 use App\Http\Controllers\API\V1\Event\EventController;
+use App\Http\Controllers\API\V1\Event\TicketTypeController;
 use App\Http\Controllers\API\V1\Organization\OrganizationController;
 use App\Http\Controllers\API\V1\Organization\MemberController;
 use App\Http\Controllers\API\V1\Public\PublicEventController;
@@ -47,6 +48,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/', [PublicEventController::class, 'index']);
         Route::get('/{event:uuid}', [PublicEventController::class, 'show']);
         Route::get('/{event:uuid}/availability', [PublicEventController::class, 'availability']);
+
+        // Public ticket types
+        Route::get('/{event:uuid}/ticket-types', [TicketTypeController::class, 'index']);
+        Route::get('/{event:uuid}/ticket-types/{ticketType}', [TicketTypeController::class, 'show']);
     });
 
     // Protected routes (Sanctum authentication required)
@@ -70,6 +75,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [EventController::class, 'store']);
             Route::put('/{event:uuid}', [EventController::class, 'update']);
             Route::delete('/{event:uuid}', [EventController::class, 'destroy']);
+
+            // Ticket Type Management
+            Route::post('/{event:uuid}/ticket-types', [TicketTypeController::class, 'store']);
+            Route::put('/{event:uuid}/ticket-types/{ticketType}', [TicketTypeController::class, 'update']);
+            Route::delete('/{event:uuid}/ticket-types/{ticketType}', [TicketTypeController::class, 'destroy']);
         });
     });
 });
