@@ -290,6 +290,7 @@ class CheckInTest extends TestCase
 
         $registration = Registration::factory()->create([
             'event_id' => $event->id,
+            'user_id' => null, // Ensure it's a guest registration
             'guest_name' => 'John Doe',
             'guest_email' => 'john@example.com',
         ]);
