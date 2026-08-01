@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\V1\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// API v1 routes will be added here
 Route::prefix('v1')->group(function () {
     // Health check endpoint
     Route::get('/health', function () {
@@ -21,5 +21,20 @@ Route::prefix('v1')->group(function () {
             'status' => 'ok',
             'timestamp' => now()->toIso8601String(),
         ]);
+    });
+
+    // Authentication routes
+    Route::prefix('auth')->group(function () {
+        // Public auth routes
+        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+        Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+        // Protected auth routes
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/logout', [AuthController::class, 'logout']);
+            Route::get('/me', [AuthController::class, 'me']);
+        });
     });
 });

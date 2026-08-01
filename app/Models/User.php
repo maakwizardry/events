@@ -30,4 +30,22 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Relationships
+    public function organizations()
+    {
+        return $this->belongsToMany(Organization::class, 'organization_members')
+            ->withPivot('role', 'joined_at')
+            ->withTimestamps();
+    }
+
+    public function registrations()
+    {
+        return $this->hasMany(Registration::class);
+    }
+
+    public function eventInvites()
+    {
+        return $this->hasMany(EventInvite::class, 'invited_by');
+    }
 }
