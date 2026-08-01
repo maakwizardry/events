@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\API\V1\Auth\AuthController;
+use App\Http\Controllers\API\V1\Event\EventController;
 use App\Http\Controllers\API\V1\Organization\OrganizationController;
 use App\Http\Controllers\API\V1\Organization\MemberController;
+use App\Http\Controllers\API\V1\Public\PublicEventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +42,13 @@ Route::prefix('v1')->group(function () {
         });
     });
 
+    // Public event discovery endpoints
+    Route::prefix('events')->group(function () {
+        Route::get('/', [PublicEventController::class, 'index']);
+        Route::get('/{event:uuid}', [PublicEventController::class, 'show']);
+        Route::get('/{event:uuid}/availability', [PublicEventController::class, 'availability']);
+    });
+
     // Protected routes (Sanctum authentication required)
     Route::middleware('auth:sanctum')->group(function () {
         // Organization Management
@@ -51,6 +60,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/members', [MemberController::class, 'store']);
             Route::put('/members/{member}', [MemberController::class, 'update']);
             Route::delete('/members/{member}', [MemberController::class, 'destroy']);
+
+            // Organization events
+            Route::get('/events', [EventController::class, 'index']);
+        });
+
+        // Event Management
+        Route::prefix('events')->group(function () {
+            Route::post('/', [EventController::class, 'store']);
+            Route::put('/{event:uuid}', [EventController::class, 'update']);
+            Route::delete('/{event:uuid}', [EventController::class, 'destroy']);
         });
     });
 });
