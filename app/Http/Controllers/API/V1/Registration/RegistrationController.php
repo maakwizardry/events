@@ -148,11 +148,14 @@ class RegistrationController extends Controller
             $event = $registration->event;
             $ticketType = $registration->ticketType;
 
+            // Store original status before updating
+            $originalStatus = $registration->status;
+
             // Update status
             $registration->update(['status' => 'cancelled']);
 
             // Decrement counters if registration was confirmed
-            if ($registration->status === 'confirmed') {
+            if ($originalStatus === 'confirmed') {
                 $event->decrement('total_registered', $registration->quantity);
                 $ticketType->decrement('quantity_sold', $registration->quantity);
 

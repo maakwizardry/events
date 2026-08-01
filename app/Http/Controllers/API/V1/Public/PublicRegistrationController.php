@@ -49,29 +49,37 @@ class PublicRegistrationController extends Controller
 
         $quantity = $request->quantity ?? 1;
 
-        // Use database transaction for capacity checking
-        $registration = DB::transaction(function () use ($request, $event, $ticketType, $quantity) {
-            // Refresh models to get latest data
+        // Check capacity before transaction
+        $event->refresh();
+        $ticketType->refresh();
+
+        $status = 'confirmed';
+
+        // Check event capacity
+        if ($event->capacity && ($event->total_registered + $quantity) > $event->capacity) {
+            if (!$event->enable_waitlist) {
+                return response()->json([
+                    'message' => 'Event is full and waitlist is not enabled',
+                ], 422);
+            }
+            $status = 'waitlisted';
+        }
+
+        // Check ticket type capacity
+        if ($ticketType->quantity && ($ticketType->quantity_sold + $quantity) > $ticketType->quantity) {
+            if (!$event->enable_waitlist) {
+                return response()->json([
+                    'message' => 'Ticket type is sold out and waitlist is not enabled',
+                ], 422);
+            }
+            $status = 'waitlisted';
+        }
+
+        // Use database transaction for creating registration
+        $registration = DB::transaction(function () use ($request, $event, $ticketType, $quantity, $status) {
+            // Refresh models again to ensure latest data
             $event->refresh();
             $ticketType->refresh();
-
-            $status = 'confirmed';
-
-            // Check event capacity
-            if ($event->capacity && ($event->total_registered + $quantity) > $event->capacity) {
-                if (!$event->enable_waitlist) {
-                    throw new \Exception('Event is full and waitlist is not enabled');
-                }
-                $status = 'waitlisted';
-            }
-
-            // Check ticket type capacity
-            if ($ticketType->quantity && ($ticketType->quantity_sold + $quantity) > $ticketType->quantity) {
-                if (!$event->enable_waitlist) {
-                    throw new \Exception('Ticket type is sold out and waitlist is not enabled');
-                }
-                $status = 'waitlisted';
-            }
 
             // Create registration (guest)
             $registration = Registration::create([

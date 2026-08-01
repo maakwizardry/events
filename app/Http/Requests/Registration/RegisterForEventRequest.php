@@ -21,14 +21,20 @@ class RegisterForEventRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'ticket_type_id' => 'required|exists:ticket_types,id',
             'quantity' => 'nullable|integer|min:1|max:10',
             'custom_fields' => 'nullable|array',
-            'guest_name' => 'required_without:user_id|string|max:255',
-            'guest_email' => 'required_without:user_id|email|max:255',
             'guest_phone' => 'nullable|string|max:50',
         ];
+
+        // Guest details required only for unauthenticated requests
+        if (!$this->user()) {
+            $rules['guest_name'] = 'required|string|max:255';
+            $rules['guest_email'] = 'required|email|max:255';
+        }
+
+        return $rules;
     }
 
     /**
