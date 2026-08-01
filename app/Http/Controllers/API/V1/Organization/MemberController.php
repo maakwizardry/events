@@ -15,6 +15,7 @@ use App\Notifications\OrganizationInvitationNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use OpenApi\Attributes as OA;
 
 class MemberController extends Controller
 {
@@ -35,9 +36,83 @@ class MemberController extends Controller
         return OrganizationMemberResource::collection($members);
     }
 
-    /**
-     * Add a member to the organization or send an invitation.
-     */
+    #[OA\Post(
+        path: '/organizations/{organization}/members',
+        tags: ['Organizations'],
+        summary: 'Add member or send invitation',
+        description: 'Add a user to organization. If user exists, adds immediately and sends notification. If user doesn\'t exist, creates invitation and sends invitation email.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'organization',
+                in: 'path',
+                required: true,
+                description: 'Organization UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'role'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'member@example.com'),
+                    new OA\Property(property: 'role', type: 'string', enum: ['owner', 'admin', 'member'], example: 'admin'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Member added or invitation sent',
+                content: new OA\JsonContent(
+                    oneOf: [
+                        new OA\Schema(
+                            properties: [
+                                new OA\Property(property: 'message', type: 'string', example: 'Member added successfully'),
+                                new OA\Property(
+                                    property: 'member',
+                                    type: 'object',
+                                    properties: [
+                                        new OA\Property(property: 'id', type: 'integer'),
+                                        new OA\Property(
+                                            property: 'user',
+                                            type: 'object',
+                                            properties: [
+                                                new OA\Property(property: 'id', type: 'integer'),
+                                                new OA\Property(property: 'name', type: 'string'),
+                                                new OA\Property(property: 'email', type: 'string'),
+                                            ]
+                                        ),
+                                        new OA\Property(property: 'role', type: 'string'),
+                                        new OA\Property(property: 'joined_at', type: 'string', format: 'date-time'),
+                                    ]
+                                ),
+                            ]
+                        ),
+                        new OA\Schema(
+                            properties: [
+                                new OA\Property(property: 'message', type: 'string', example: 'Invitation sent successfully'),
+                                new OA\Property(
+                                    property: 'invitation',
+                                    type: 'object',
+                                    properties: [
+                                        new OA\Property(property: 'email', type: 'string'),
+                                        new OA\Property(property: 'role', type: 'string'),
+                                        new OA\Property(property: 'expires_at', type: 'string', format: 'date-time'),
+                                        new OA\Property(property: 'token', type: 'string'),
+                                    ]
+                                ),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Not authorized to manage members'),
+            new OA\Response(response: 422, description: 'User already a member or duplicate invitation')
+        ]
+    )]
     public function store(InviteMemberRequest $request, Organization $organization)
     {
         $this->authorize('manageMembers', $organization);

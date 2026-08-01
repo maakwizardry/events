@@ -2,12 +2,12 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Events API - Luma-Inspired Event Management",
-        "description": "Open-source headless Laravel event management API from Maak. Features organizations, events, ticket types, registrations, QR check-ins, and waitlist management.",
+        "description": "Open-source headless Laravel event management API from Maak. Features organizations, events, ticket types, registrations, QR check-ins, waitlist management, and team member invitations.",
         "contact": {
             "name": "Maak",
             "url": "https://github.com/maakwizardry/events"
         },
-        "version": "0.7.0"
+        "version": "1.1.0"
     },
     "servers": [
         {
@@ -271,6 +271,354 @@
                     }
                 ]
             }
+        },
+        "/invitations/{token}/accept": {
+            "post": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Accept an organization invitation",
+                "description": "Authenticated user accepts an invitation to join an organization. User email must match the invited email.",
+                "operationId": "0e5e88c6024a0678696b58395bf44822",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "Invitation token from email",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "abc123xyz789..."
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invitation accepted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invitation accepted successfully"
+                                        },
+                                        "organization": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Tech Community"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    },
+                    "403": {
+                        "description": "Email mismatch - wrong user"
+                    },
+                    "404": {
+                        "description": "Invalid invitation token"
+                    },
+                    "422": {
+                        "description": "Invitation expired, already accepted, or user already a member"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/invitations/{token}": {
+            "get": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Preview invitation details",
+                "description": "Get details of an invitation before accepting (no authentication required)",
+                "operationId": "085c7121c1117e3d66e67d77133de8e4",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "description": "Invitation token",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invitation details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "invitation": {
+                                            "properties": {
+                                                "organization_name": {
+                                                    "type": "string",
+                                                    "example": "Tech Community"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                },
+                                                "invited_by": {
+                                                    "type": "string",
+                                                    "example": "Admin User"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "newuser@example.com"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invalid invitation token"
+                    },
+                    "422": {
+                        "description": "Invitation expired or already accepted"
+                    }
+                }
+            }
+        },
+        "/invitations/my": {
+            "get": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "List my pending invitations",
+                "description": "Get all pending invitations for the authenticated user",
+                "operationId": "9e053c86a7f667c97079bdb64bde7f76",
+                "responses": {
+                    "200": {
+                        "description": "List of pending invitations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "invitations": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "token": {
+                                                        "type": "string",
+                                                        "example": "abc123xyz789..."
+                                                    },
+                                                    "organization_name": {
+                                                        "type": "string",
+                                                        "example": "Tech Community"
+                                                    },
+                                                    "organization_uuid": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "admin"
+                                                    },
+                                                    "invited_by": {
+                                                        "type": "string",
+                                                        "example": "Admin User"
+                                                    },
+                                                    "expires_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not authenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/organizations/{organization}/members": {
+            "post": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Add member or send invitation",
+                "description": "Add a user to organization. If user exists, adds immediately and sends notification. If user doesn't exist, creates invitation and sends invitation email.",
+                "operationId": "f4beafe15d0193f4852423cd12e0e27e",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "description": "Organization UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "member@example.com"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "admin",
+                                        "enum": [
+                                            "owner",
+                                            "admin",
+                                            "member"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Member added or invitation sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Member added successfully"
+                                                },
+                                                "member": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "user": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "email": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "role": {
+                                                            "type": "string"
+                                                        },
+                                                        "joined_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Invitation sent successfully"
+                                                },
+                                                "invitation": {
+                                                    "properties": {
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "role": {
+                                                            "type": "string"
+                                                        },
+                                                        "expires_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "token": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to manage members"
+                    },
+                    "422": {
+                        "description": "User already a member or duplicate invitation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -287,6 +635,14 @@
         {
             "name": "Authentication",
             "description": "User authentication and account management"
+        },
+        {
+            "name": "Organizations",
+            "description": "Organization and team member management"
+        },
+        {
+            "name": "Invitations",
+            "description": "Organization member invitation system for existing and new users"
         }
     ]
 }

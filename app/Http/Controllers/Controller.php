@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use OpenApi\Attributes as OA;
 
 #[OA\Info(
-    version: '0.7.0',
+    version: '1.1.0',
     title: 'Events API - Luma-Inspired Event Management',
-    description: 'Open-source headless Laravel event management API from Maak. Features organizations, events, ticket types, registrations, QR check-ins, and waitlist management.',
+    description: 'Open-source headless Laravel event management API from Maak. Features organizations, events, ticket types, registrations, QR check-ins, waitlist management, and team member invitations.',
     contact: new OA\Contact(
         name: 'Maak',
         url: 'https://github.com/maakwizardry/events'
@@ -55,6 +55,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(
     name: 'Check-In',
     description: 'QR code check-in and statistics'
+)]
+#[OA\Tag(
+    name: 'Invitations',
+    description: 'Organization member invitation system for existing and new users'
 )]
 abstract class Controller
 {
