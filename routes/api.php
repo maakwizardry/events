@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\V1\Auth\AuthController;
+use App\Http\Controllers\API\V1\Event\CheckInController;
 use App\Http\Controllers\API\V1\Event\EventController;
 use App\Http\Controllers\API\V1\Event\TicketTypeController;
 use App\Http\Controllers\API\V1\Organization\OrganizationController;
@@ -100,5 +101,12 @@ Route::prefix('v1')->group(function () {
 
         // Authenticated user registration for events
         Route::post('/events/{event:uuid}/register', [RegistrationController::class, 'store']);
+
+        // Event Check-In
+        Route::prefix('events/{event:uuid}')->group(function () {
+            Route::post('/check-in', [CheckInController::class, 'checkIn']);
+            Route::get('/check-in/stats', [CheckInController::class, 'statistics']);
+            Route::get('/registrations', [CheckInController::class, 'registrations']);
+        });
     });
 });
