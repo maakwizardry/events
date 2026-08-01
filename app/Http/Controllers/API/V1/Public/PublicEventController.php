@@ -121,6 +121,9 @@ class PublicEventController extends Controller
             ], 404);
         }
 
+        // Eager load ticket types to prevent N+1 queries
+        $event->load('ticketTypes');
+
         return response()->json([
             'capacity' => $event->capacity,
             'total_registered' => $event->total_registered,

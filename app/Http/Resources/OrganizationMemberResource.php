@@ -16,11 +16,13 @@ class OrganizationMemberResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-            ],
+            'user' => $this->when($this->relationLoaded('user'), function () {
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'email' => $this->user->email,
+                ];
+            }),
             'role' => $this->role,
             'joined_at' => $this->joined_at,
             'created_at' => $this->created_at,

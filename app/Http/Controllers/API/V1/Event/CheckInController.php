@@ -66,9 +66,12 @@ class CheckInController extends Controller
             'check_in_location' => $request->location,
         ]);
 
+        // Eager load relationships for the response
+        $registration->load(['event', 'ticketType']);
+
         return response()->json([
             'message' => 'Check-in successful',
-            'registration' => new RegistrationResource($registration->fresh()),
+            'registration' => new RegistrationResource($registration),
         ]);
     }
 
