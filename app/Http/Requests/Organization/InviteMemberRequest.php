@@ -22,18 +22,8 @@ class InviteMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'role' => 'required|in:member,admin,owner',
-        ];
-    }
-
-    /**
-     * Get custom messages for validator errors.
-     */
-    public function messages(): array
-    {
-        return [
-            'email.exists' => 'The user with this email does not exist in the system.',
         ];
     }
 }

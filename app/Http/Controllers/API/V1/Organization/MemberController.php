@@ -7,10 +7,14 @@ use App\Http\Requests\Organization\InviteMemberRequest;
 use App\Http\Requests\Organization\UpdateMemberRequest;
 use App\Http\Resources\OrganizationMemberResource;
 use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use App\Models\OrganizationMember;
 use App\Models\User;
+use App\Notifications\MemberAddedNotification;
+use App\Notifications\OrganizationInvitationNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class MemberController extends Controller
 {
@@ -32,7 +36,7 @@ class MemberController extends Controller
     }
 
     /**
-     * Add a member to the organization.
+     * Add a member to the organization or send an invitation.
      */
     public function store(InviteMemberRequest $request, Organization $organization)
     {
@@ -40,20 +44,78 @@ class MemberController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        // Check if user is already a member
-        if ($organization->hasMember($user)) {
+        // Case 1: User exists - add them directly
+        if ($user) {
+            // Check if user is already a member
+            if ($organization->hasMember($user)) {
+                return response()->json([
+                    'message' => 'User is already a member of this organization',
+                ], 422);
+            }
+
+            $member = $organization->members()->create([
+                'user_id' => $user->id,
+                'role' => $request->role,
+                'joined_at' => now(),
+            ]);
+
+            // Send notification to the added user
+            $user->notify(new MemberAddedNotification(
+                $organization,
+                $request->role,
+                $request->user()
+            ));
+
             return response()->json([
-                'message' => 'User is already a member of this organization',
-            ], 422);
+                'message' => 'Member added successfully',
+                'member' => new OrganizationMemberResource($member->load('user')),
+            ], 201);
         }
 
-        $member = $organization->members()->create([
-            'user_id' => $user->id,
+        // Case 2: User doesn't exist - create invitation
+        // Check if there's already a pending invitation
+        $existingInvitation = OrganizationInvitation::where('organization_id', $organization->id)
+            ->where('email', $request->email)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingInvitation) {
+            if ($existingInvitation->isPending()) {
+                return response()->json([
+                    'message' => 'An invitation has already been sent to this email address',
+                    'invitation' => [
+                        'email' => $existingInvitation->email,
+                        'role' => $existingInvitation->role,
+                        'expires_at' => $existingInvitation->expires_at,
+                    ],
+                ], 422);
+            }
+
+            // Mark expired invitation as expired and create a new one
+            $existingInvitation->markAsExpired();
+        }
+
+        // Create new invitation
+        $invitation = OrganizationInvitation::create([
+            'organization_id' => $organization->id,
+            'email' => $request->email,
             'role' => $request->role,
-            'joined_at' => now(),
+            'invited_by' => $request->user()->id,
         ]);
 
-        return new OrganizationMemberResource($member->load('user'));
+        // Send invitation email
+        Notification::route('mail', $request->email)
+            ->notify(new OrganizationInvitationNotification($invitation));
+
+        return response()->json([
+            'message' => 'Invitation sent successfully',
+            'invitation' => [
+                'email' => $invitation->email,
+                'role' => $invitation->role,
+                'expires_at' => $invitation->expires_at,
+                'token' => $invitation->token,
+            ],
+        ], 201);
     }
 
     /**

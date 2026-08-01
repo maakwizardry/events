@@ -4,6 +4,7 @@ use App\Http\Controllers\API\V1\Auth\AuthController;
 use App\Http\Controllers\API\V1\Event\CheckInController;
 use App\Http\Controllers\API\V1\Event\EventController;
 use App\Http\Controllers\API\V1\Event\TicketTypeController;
+use App\Http\Controllers\API\V1\Organization\InvitationController;
 use App\Http\Controllers\API\V1\Organization\OrganizationController;
 use App\Http\Controllers\API\V1\Organization\MemberController;
 use App\Http\Controllers\API\V1\Public\PublicEventController;
@@ -65,6 +66,10 @@ Route::prefix('v1')->group(function () {
 
     // Protected routes (Sanctum authentication required)
     Route::middleware('auth:sanctum')->group(function () {
+        // Invitation management (put specific routes first)
+        Route::get('/invitations/my', [InvitationController::class, 'myInvitations']);
+        Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept']);
+
         // Organization Management
         Route::apiResource('organizations', OrganizationController::class);
 
@@ -110,4 +115,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/registrations', [CheckInController::class, 'registrations']);
         });
     });
+
+    // Public invitation preview (outside auth middleware)
+    Route::get('/invitations/{token}', [InvitationController::class, 'show']);
 });
