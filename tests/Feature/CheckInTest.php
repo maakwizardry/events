@@ -277,4 +277,58 @@ class CheckInTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_organizer_can_export_registrations_as_csv()
+    {
+        $user = User::factory()->create();
+        $org = Organization::factory()->create();
+        $event = Event::factory()->create([
+            'organization_id' => $org->id,
+            'name' => 'Test Event',
+            'slug' => 'test-event',
+        ]);
+
+        $registration = Registration::factory()->create([
+            'event_id' => $event->id,
+            'guest_name' => 'John Doe',
+            'guest_email' => 'john@example.com',
+        ]);
+
+        OrganizationMember::create([
+            'organization_id' => $org->id,
+            'user_id' => $user->id,
+            'role' => 'admin',
+        ]);
+
+        $token = $user->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer $token")
+            ->get("/api/v1/events/{$event->uuid}/registrations/export");
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+        // Get the streamed content
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('Registration ID', $content);
+        $this->assertStringContainsString('Attendee Name', $content);
+        $this->assertStringContainsString('John Doe', $content);
+        $this->assertStringContainsString('john@example.com', $content);
+        $this->assertStringContainsString($registration->uuid, $content);
+    }
+
+    public function test_non_organizer_cannot_export_csv()
+    {
+        $user = User::factory()->create();
+        $org = Organization::factory()->create();
+        $event = Event::factory()->create(['organization_id' => $org->id]);
+
+        $token = $user->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', "Bearer $token")
+            ->get("/api/v1/events/{$event->uuid}/registrations/export");
+
+        $response->assertStatus(403);
+    }
 }

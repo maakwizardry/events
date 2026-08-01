@@ -176,4 +176,93 @@ class CheckInController extends Controller
 
         return RegistrationResource::collection($registrations);
     }
+
+    /**
+     * Export registrations as CSV.
+     */
+    public function exportCsv(Request $request, Event $event)
+    {
+        $this->authorize('manageRegistrations', $event);
+
+        $query = $event->registrations()
+            ->with(['ticketType', 'user']);
+
+        // Apply same filters as registrations() method
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('checked_in')) {
+            $query->where('is_checked_in', $request->boolean('checked_in'));
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('guest_name', 'like', '%' . $search . '%')
+                  ->orWhere('guest_email', 'like', '%' . $search . '%')
+                  ->orWhereHas('user', function ($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', '%' . $search . '%')
+                               ->orWhere('email', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        $registrations = $query->latest('created_at')->get();
+
+        // Generate CSV
+        $filename = 'registrations-' . $event->slug . '-' . now()->format('Y-m-d-His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () use ($registrations) {
+            $file = fopen('php://output', 'w');
+
+            // CSV headers
+            fputcsv($file, [
+                'Registration ID',
+                'Attendee Name',
+                'Email',
+                'Phone',
+                'Ticket Type',
+                'Quantity',
+                'Total Price',
+                'Status',
+                'Checked In',
+                'Check-In Time',
+                'Check-In Location',
+                'Registered At',
+                'Custom Fields',
+            ]);
+
+            // CSV rows
+            foreach ($registrations as $registration) {
+                fputcsv($file, [
+                    $registration->uuid,
+                    $registration->attendeeName,
+                    $registration->attendeeEmail,
+                    $registration->guest_phone ?? '',
+                    $registration->ticketType->name,
+                    $registration->quantity,
+                    $registration->total_price,
+                    $registration->status,
+                    $registration->is_checked_in ? 'Yes' : 'No',
+                    $registration->checked_in_at?->toDateTimeString() ?? '',
+                    $registration->check_in_location ?? '',
+                    $registration->registered_at?->toDateTimeString() ?? '',
+                    $registration->custom_fields ? json_encode($registration->custom_fields) : '',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

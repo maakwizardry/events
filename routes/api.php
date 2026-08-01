@@ -106,6 +106,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('events/{event:uuid}')->group(function () {
             Route::post('/check-in', [CheckInController::class, 'checkIn']);
             Route::get('/check-in/stats', [CheckInController::class, 'statistics']);
+            Route::get('/registrations/export', [CheckInController::class, 'exportCsv']);
             Route::get('/registrations', [CheckInController::class, 'registrations']);
         });
     });
