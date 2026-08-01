@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\API\V1\Auth\AuthController;
+use App\Http\Controllers\API\V1\Organization\OrganizationController;
+use App\Http\Controllers\API\V1\Organization\MemberController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,6 +37,20 @@ Route::prefix('v1')->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::get('/me', [AuthController::class, 'me']);
+        });
+    });
+
+    // Protected routes (Sanctum authentication required)
+    Route::middleware('auth:sanctum')->group(function () {
+        // Organization Management
+        Route::apiResource('organizations', OrganizationController::class);
+
+        // Team member management
+        Route::prefix('organizations/{organization}')->group(function () {
+            Route::get('/members', [MemberController::class, 'index']);
+            Route::post('/members', [MemberController::class, 'store']);
+            Route::put('/members/{member}', [MemberController::class, 'update']);
+            Route::delete('/members/{member}', [MemberController::class, 'destroy']);
         });
     });
 });
