@@ -272,6 +272,1366 @@
                 ]
             }
         },
+        "/events/{event}/check-in": {
+            "post": {
+                "tags": [
+                    "Check-In"
+                ],
+                "summary": "Check in attendee",
+                "description": "Check in an attendee using their QR code. Requires check-in permissions for the event.",
+                "operationId": "06c0897ab8b7588ba76e3c1df89497e0",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "qr_code_data"
+                                ],
+                                "properties": {
+                                    "qr_code_data": {
+                                        "type": "string",
+                                        "example": "QR_CODE_STRING"
+                                    },
+                                    "location": {
+                                        "type": "string",
+                                        "example": "Main Entrance",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Check-in successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Check-in successful"
+                                        },
+                                        "registration": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to check in attendees"
+                    },
+                    "404": {
+                        "description": "Invalid QR code"
+                    },
+                    "422": {
+                        "description": "Already checked in or invalid registration status"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events/{event}/check-in/stats": {
+            "get": {
+                "tags": [
+                    "Check-In"
+                ],
+                "summary": "Get check-in statistics",
+                "description": "Get comprehensive check-in statistics and analytics for an event. Requires check-in permissions.",
+                "operationId": "7290e233b9408772a4a23c61b905234e",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Check-in statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "event": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "starts_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "summary": {
+                                            "properties": {
+                                                "total_registrations": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "checked_in": {
+                                                    "type": "integer",
+                                                    "example": 75
+                                                },
+                                                "pending_check_in": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "waitlisted": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "cancelled": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "check_in_rate": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 75
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "check_ins_by_hour": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "ticket_type_breakdown": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to view check-in statistics"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events/{event}/registrations": {
+            "get": {
+                "tags": [
+                    "Check-In"
+                ],
+                "summary": "List event registrations",
+                "description": "Get all registrations for an event with filtering and search. Requires registration management permissions.",
+                "operationId": "a0857f357e038e822827b14ba87ba02c",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by registration status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "confirmed",
+                            "enum": [
+                                "confirmed",
+                                "waitlisted",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "checked_in",
+                        "in": "query",
+                        "description": "Filter by check-in status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by attendee name or email",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "john"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of registrations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to manage registrations"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events/{event}/registrations/export": {
+            "get": {
+                "tags": [
+                    "Check-In"
+                ],
+                "summary": "Export registrations to CSV",
+                "description": "Export event registrations as a CSV file with filtering options. Requires registration management permissions.",
+                "operationId": "8118b71b3111027c7c81f2882425bfb1",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by registration status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "confirmed",
+                                "waitlisted",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "checked_in",
+                        "in": "query",
+                        "description": "Filter by check-in status",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search by attendee name or email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CSV file download",
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to export registrations"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/organizations/{organization}/events": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "List organization events",
+                "description": "Get all events for a specific organization. Requires user to be a member of the organization.",
+                "operationId": "e1c459075da9a9cf1eef4393823aeced",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "description": "Organization UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of organization events",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Tech Conference 2024"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "tech-conference-2024"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "published"
+                                                    },
+                                                    "visibility": {
+                                                        "type": "string",
+                                                        "example": "public"
+                                                    },
+                                                    "starts_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "registrations_count": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not a member of this organization"
+                    },
+                    "404": {
+                        "description": "Organization not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events": {
+            "post": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Create a new event",
+                "description": "Create a new event for an organization. Requires admin or owner role in the organization.",
+                "operationId": "17ba7c9cf73f06357bf005ec7468f728",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "organization_id",
+                                    "name",
+                                    "visibility",
+                                    "location_type",
+                                    "starts_at",
+                                    "ends_at"
+                                ],
+                                "properties": {
+                                    "organization_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Tech Conference 2024"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "tech-conference-2024",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Join us for an amazing tech conference",
+                                        "nullable": true
+                                    },
+                                    "cover_image_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "visibility": {
+                                        "type": "string",
+                                        "example": "public",
+                                        "enum": [
+                                            "public",
+                                            "private"
+                                        ]
+                                    },
+                                    "location_type": {
+                                        "type": "string",
+                                        "example": "physical",
+                                        "enum": [
+                                            "physical",
+                                            "online",
+                                            "hybrid"
+                                        ]
+                                    },
+                                    "location_address": {
+                                        "type": "string",
+                                        "example": "123 Main St",
+                                        "nullable": true
+                                    },
+                                    "location_city": {
+                                        "type": "string",
+                                        "example": "San Francisco",
+                                        "nullable": true
+                                    },
+                                    "location_state": {
+                                        "type": "string",
+                                        "example": "CA",
+                                        "nullable": true
+                                    },
+                                    "location_country": {
+                                        "type": "string",
+                                        "example": "United States",
+                                        "nullable": true
+                                    },
+                                    "location_zip": {
+                                        "type": "string",
+                                        "example": "94105",
+                                        "nullable": true
+                                    },
+                                    "location_latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 37.7749,
+                                        "nullable": true
+                                    },
+                                    "location_longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -122.4194,
+                                        "nullable": true
+                                    },
+                                    "online_meeting_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://zoom.us/j/123456789",
+                                        "nullable": true
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-12-01T10:00:00Z"
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-12-01T18:00:00Z"
+                                    },
+                                    "timezone": {
+                                        "type": "string",
+                                        "example": "America/Los_Angeles",
+                                        "nullable": true
+                                    },
+                                    "capacity": {
+                                        "type": "integer",
+                                        "example": 100,
+                                        "nullable": true
+                                    },
+                                    "enable_waitlist": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "auto_approve_registrations": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "require_approval": {
+                                        "type": "boolean",
+                                        "example": false,
+                                        "nullable": true
+                                    },
+                                    "registration_opens_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "registration_closes_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "enum": [
+                                            "conference",
+                                            "workshop",
+                                            "meetup",
+                                            "webinar",
+                                            "networking"
+                                        ]
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "tech",
+                                            "networking"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "draft",
+                                        "nullable": true,
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "cancelled",
+                                            "completed"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to create events for this organization"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events/{event}": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get event details",
+                "description": "Get detailed information about a specific event. Requires authorization to view the event.",
+                "operationId": "8acdb3ac7ee5021ae9834bab337f823b",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event details"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to view this event"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Update event",
+                "description": "Update event details. Requires admin or owner role in the organization.",
+                "operationId": "12ed6e275fb359902fb8973e137fd73d",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Tech Conference 2024"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "tech-conference-2024"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "visibility": {
+                                        "type": "string",
+                                        "enum": [
+                                            "public",
+                                            "private"
+                                        ]
+                                    },
+                                    "location_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "physical",
+                                            "online",
+                                            "hybrid"
+                                        ]
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "ends_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "capacity": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "cancelled",
+                                            "completed"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Event updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to update this event"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Delete event",
+                "description": "Delete an event. Requires admin or owner role in the organization.",
+                "operationId": "7b37be6da1e9cce8da63d2ce18813309",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Event deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to delete this event"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events/{event}/availability": {
+            "get": {
+                "tags": [
+                    "Events"
+                ],
+                "summary": "Get event availability (authenticated)",
+                "description": "Get event capacity and availability information. Requires authorization to view the event.",
+                "operationId": "ba1afb8c643e9c52bb32bffb5c2e2502",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event availability details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "capacity": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "total_registered": {
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "available_spots": {
+                                            "type": "integer",
+                                            "example": 55
+                                        },
+                                        "is_full": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "enable_waitlist": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "is_registration_open": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "registration_opens_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        },
+                                        "registration_closes_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to view this event"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/public/events/{event}/ticket-types": {
+            "get": {
+                "tags": [
+                    "Ticket Types"
+                ],
+                "summary": "List event ticket types",
+                "description": "Get all ticket types for an event. Public endpoint for public events, requires authentication for private events.",
+                "operationId": "6b6b3030b73bd4f487bee3c5812cced1",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of ticket types",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "General Admission"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "example": 100,
+                                                        "nullable": true
+                                                    },
+                                                    "quantity_sold": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    },
+                                                    "sales_start_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "nullable": true
+                                                    },
+                                                    "sales_end_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not authorized to view ticket types for private event"
+                    },
+                    "404": {
+                        "description": "Event not found"
+                    }
+                }
+            }
+        },
+        "/events/{event}/ticket-types": {
+            "post": {
+                "tags": [
+                    "Ticket Types"
+                ],
+                "summary": "Create ticket type",
+                "description": "Create a new ticket type for an event. Requires event update permissions.",
+                "operationId": "a29dbdfa195906b6e4561a62d5a1c4e8",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "General Admission"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Standard entry ticket",
+                                        "nullable": true
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 50
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 100,
+                                        "nullable": true
+                                    },
+                                    "sales_start_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "sales_end_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "order": {
+                                        "type": "integer",
+                                        "example": 0,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ticket type created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to update this event"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/public/events/{event}/ticket-types/{ticketType}": {
+            "get": {
+                "tags": [
+                    "Ticket Types"
+                ],
+                "summary": "Get ticket type details",
+                "description": "Get detailed information about a specific ticket type. Public endpoint for public events.",
+                "operationId": "7c49987c0f83ceb76ba3974ff18c4fe4",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "ticketType",
+                        "in": "path",
+                        "description": "Ticket Type ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ticket type details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not authorized to view ticket type"
+                    },
+                    "404": {
+                        "description": "Ticket type does not belong to this event"
+                    }
+                }
+            }
+        },
+        "/events/{event}/ticket-types/{ticketType}": {
+            "put": {
+                "tags": [
+                    "Ticket Types"
+                ],
+                "summary": "Update ticket type",
+                "description": "Update ticket type details. Requires event update permissions.",
+                "operationId": "48749f925f31d423828219cf1cf833d7",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "ticketType",
+                        "in": "path",
+                        "description": "Ticket Type ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "VIP Pass"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 50
+                                    },
+                                    "sales_start_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "sales_end_at": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "order": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ticket type updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to update this event"
+                    },
+                    "404": {
+                        "description": "Ticket type does not belong to this event"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Ticket Types"
+                ],
+                "summary": "Delete ticket type",
+                "description": "Delete a ticket type. Cannot delete if there are existing registrations. Requires event update permissions.",
+                "operationId": "65c6f2da345a7e6c43893676f55a5655",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "ticketType",
+                        "in": "path",
+                        "description": "Ticket Type ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ticket type deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ticket type deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized to update this event"
+                    },
+                    "404": {
+                        "description": "Ticket type does not belong to this event"
+                    },
+                    "422": {
+                        "description": "Cannot delete ticket type with existing registrations"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/invitations/{token}/accept": {
             "post": {
                 "tags": [
@@ -619,6 +1979,1236 @@
                     }
                 ]
             }
+        },
+        "/organizations": {
+            "get": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "List user organizations",
+                "description": "Get all organizations where the authenticated user is a member",
+                "operationId": "676bef8dfde354591a3d9b90ecc9e0ff",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of organizations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Tech Community"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "tech-community"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "logo_url": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "website_url": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "members_count": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "events_count": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Create a new organization",
+                "description": "Create a new organization and become its owner",
+                "operationId": "6951556bcf75a635eee4f116b012baf2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "slug"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Tech Community"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "tech-community"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "A community for tech enthusiasts"
+                                    },
+                                    "logo_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "website_url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "nullable": true
+                                    },
+                                    "primary_color": {
+                                        "type": "string",
+                                        "example": "#3B82F6"
+                                    },
+                                    "secondary_color": {
+                                        "type": "string",
+                                        "example": "#1E40AF"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Organization created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/organizations/{organization}": {
+            "get": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Get organization details",
+                "description": "Get details of a specific organization",
+                "operationId": "6cf169df05a11d2bc77f98141d608788",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "description": "Organization UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Organization details"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "404": {
+                        "description": "Organization not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Update organization",
+                "description": "Update organization details (owner/admin only)",
+                "operationId": "0b609056c068cc14922a8074b916f1db",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "description": "Organization UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "logo_url": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "website_url": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "primary_color": {
+                                        "type": "string"
+                                    },
+                                    "secondary_color": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Organization updated"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Delete organization",
+                "description": "Delete an organization (owner only)",
+                "operationId": "3399797ce39a0c2785d248fd1978e167",
+                "parameters": [
+                    {
+                        "name": "organization",
+                        "in": "path",
+                        "description": "Organization UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Organization deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Organization deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Not authorized - owner only"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/public/events": {
+            "get": {
+                "tags": [
+                    "Public Events"
+                ],
+                "summary": "List public events",
+                "description": "Get all public published events with filtering and search capabilities. No authentication required.",
+                "operationId": "17f1401ee71ac680cb895b643f926d59",
+                "parameters": [
+                    {
+                        "name": "upcoming",
+                        "in": "query",
+                        "description": "Filter by upcoming events only (default: true)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Filter events starting from this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-01-01"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Filter events ending before this date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-12-31"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Filter by event category",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "conference"
+                        }
+                    },
+                    {
+                        "name": "city",
+                        "in": "query",
+                        "description": "Filter by city name",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "San Francisco"
+                        }
+                    },
+                    {
+                        "name": "country",
+                        "in": "query",
+                        "description": "Filter by country name",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "United States"
+                        }
+                    },
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "description": "Latitude for proximity search (requires longitude)",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 37.7749
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "description": "Longitude for proximity search (requires latitude)",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "example": -122.4194
+                        }
+                    },
+                    {
+                        "name": "radius",
+                        "in": "query",
+                        "description": "Search radius in kilometers (default: 50)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 50
+                        }
+                    },
+                    {
+                        "name": "location_type",
+                        "in": "query",
+                        "description": "Filter by location type",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "in_person",
+                            "enum": [
+                                "in_person",
+                                "online",
+                                "hybrid"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search in event name or description",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "tech"
+                        }
+                    },
+                    {
+                        "name": "tags",
+                        "in": "query",
+                        "description": "Filter by tags (can be array or single value)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "networking"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Sort field",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "starts_at",
+                            "enum": [
+                                "starts_at",
+                                "created_at",
+                                "name"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Sort order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "asc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default: 20)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of public events",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Tech Conference 2024"
+                                                    },
+                                                    "slug": {
+                                                        "type": "string",
+                                                        "example": "tech-conference-2024"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "starts_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "ends_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "location_type": {
+                                                        "type": "string",
+                                                        "example": "in_person"
+                                                    },
+                                                    "capacity": {
+                                                        "type": "integer",
+                                                        "example": 100
+                                                    },
+                                                    "total_registered": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/public/events/{event}": {
+            "get": {
+                "tags": [
+                    "Public Events"
+                ],
+                "summary": "Get public event details",
+                "description": "Get detailed information about a specific public event. No authentication required.",
+                "operationId": "d17696bb66d3401f23a03dccc6e611a3",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Tech Conference 2024"
+                                                },
+                                                "slug": {
+                                                    "type": "string",
+                                                    "example": "tech-conference-2024"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "starts_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "ends_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "location_type": {
+                                                    "type": "string",
+                                                    "example": "in_person"
+                                                },
+                                                "capacity": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "total_registered": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found or not available"
+                    }
+                }
+            }
+        },
+        "/public/events/{event}/availability": {
+            "get": {
+                "tags": [
+                    "Public Events"
+                ],
+                "summary": "Get event availability",
+                "description": "Get event capacity and ticket availability information. No authentication required.",
+                "operationId": "4ec1cb19955304cc371ebaa7b96e5109",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Event availability details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "capacity": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "total_registered": {
+                                            "type": "integer",
+                                            "example": 45
+                                        },
+                                        "available_spots": {
+                                            "type": "integer",
+                                            "example": 55
+                                        },
+                                        "is_full": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "enable_waitlist": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "is_registration_open": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "registration_opens_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        },
+                                        "registration_closes_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
+                                        },
+                                        "ticket_types": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "General Admission"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50
+                                                    },
+                                                    "available_quantity": {
+                                                        "type": "integer",
+                                                        "example": 30
+                                                    },
+                                                    "is_sold_out": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "is_on_sale": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found or not available"
+                    }
+                }
+            }
+        },
+        "/public/events/{event}/register": {
+            "post": {
+                "tags": [
+                    "Public Events"
+                ],
+                "summary": "Register for public event (guest)",
+                "description": "Register for a public event as a guest without authentication. Creates registration with guest information.",
+                "operationId": "db785248eae927dd4c029328bf1f9213",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ticket_type_id",
+                                    "guest_name",
+                                    "guest_email"
+                                ],
+                                "properties": {
+                                    "ticket_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "guest_name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "guest_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "guest_phone": {
+                                        "type": "string",
+                                        "example": "+1234567890",
+                                        "nullable": true
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "custom_fields": {
+                                        "type": "object",
+                                        "example": {
+                                            "dietary_restrictions": "vegetarian",
+                                            "company": "Acme Corp"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registration successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "confirmed"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50
+                                                },
+                                                "qr_code_data": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Event not found or not available for public registration"
+                    },
+                    "422": {
+                        "description": "Validation error or registration not open"
+                    }
+                }
+            }
+        },
+        "/public/registrations/{registration}": {
+            "get": {
+                "tags": [
+                    "Public Events"
+                ],
+                "summary": "View registration details",
+                "description": "View registration details by UUID. No authentication required - useful for guests to view their registration.",
+                "operationId": "207070dc86c9f550179a93c15ab3e989",
+                "parameters": [
+                    {
+                        "name": "registration",
+                        "in": "path",
+                        "description": "Registration UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registration details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "confirmed"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50
+                                                },
+                                                "qr_code_data": {
+                                                    "type": "string"
+                                                },
+                                                "is_checked_in": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Registration not found"
+                    }
+                }
+            }
+        },
+        "/registrations": {
+            "get": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "List my registrations",
+                "description": "Get all registrations for the authenticated user",
+                "operationId": "8af1a2eedf460f934b7a19799b110195",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of user registrations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "uuid": {
+                                                        "type": "string",
+                                                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "confirmed"
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "total_price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50
+                                                    },
+                                                    "is_checked_in": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "registered_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/events/{event}/register": {
+            "post": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Register for event (authenticated)",
+                "description": "Register for an event as an authenticated user. User information is taken from the authenticated account.",
+                "operationId": "c9e71fb02705d594b495433b2901736b",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "description": "Event UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ticket_type_id"
+                                ],
+                                "properties": {
+                                    "ticket_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "custom_fields": {
+                                        "type": "object",
+                                        "example": {
+                                            "dietary_restrictions": "vegetarian",
+                                            "company": "Acme Corp"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registration successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "uuid": {
+                                                    "type": "string",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "confirmed"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 50
+                                                },
+                                                "qr_code_data": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error or registration not open"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/registrations/{registration}": {
+            "get": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Get my registration details",
+                "description": "Get details of a specific registration. Users can only view their own registrations.",
+                "operationId": "9364e1da3619e9f6ecbbc763f8d87782",
+                "parameters": [
+                    {
+                        "name": "registration",
+                        "in": "path",
+                        "description": "Registration UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registration details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Unauthorized - not your registration"
+                    },
+                    "404": {
+                        "description": "Registration not found"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/registrations/{registration}/cancel": {
+            "post": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Cancel my registration",
+                "description": "Cancel a registration. Users can only cancel their own registrations. Frees up capacity for others.",
+                "operationId": "8893bdac551873958b6c0d863be5ed53",
+                "parameters": [
+                    {
+                        "name": "registration",
+                        "in": "path",
+                        "description": "Registration UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Registration cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Registration cancelled successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Unauthorized - not your registration"
+                    },
+                    "422": {
+                        "description": "Registration is already cancelled"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -639,6 +3229,26 @@
         {
             "name": "Organizations",
             "description": "Organization and team member management"
+        },
+        {
+            "name": "Events",
+            "description": "Event creation, management, and discovery"
+        },
+        {
+            "name": "Public Events",
+            "description": "Public event discovery and information (no authentication required)"
+        },
+        {
+            "name": "Ticket Types",
+            "description": "Ticket type management for events"
+        },
+        {
+            "name": "Registrations",
+            "description": "Event registration management"
+        },
+        {
+            "name": "Check-In",
+            "description": "QR code check-in and statistics"
         },
         {
             "name": "Invitations",

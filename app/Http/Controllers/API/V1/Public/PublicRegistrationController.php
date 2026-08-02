@@ -9,12 +9,67 @@ use App\Models\Event;
 use App\Models\Registration;
 use App\Models\TicketType;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class PublicRegistrationController extends Controller
 {
-    /**
-     * Register for a public event (guest registration).
-     */
+    #[OA\Post(
+        path: '/public/events/{event}/register',
+        tags: ['Public Events'],
+        summary: 'Register for public event (guest)',
+        description: 'Register for a public event as a guest without authentication. Creates registration with guest information.',
+        parameters: [
+            new OA\Parameter(
+                name: 'event',
+                in: 'path',
+                required: true,
+                description: 'Event UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['ticket_type_id', 'guest_name', 'guest_email'],
+                properties: [
+                    new OA\Property(property: 'ticket_type_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'guest_name', type: 'string', example: 'John Doe'),
+                    new OA\Property(property: 'guest_email', type: 'string', format: 'email', example: 'john@example.com'),
+                    new OA\Property(property: 'guest_phone', type: 'string', example: '+1234567890', nullable: true),
+                    new OA\Property(property: 'quantity', type: 'integer', example: 1),
+                    new OA\Property(
+                        property: 'custom_fields',
+                        type: 'object',
+                        example: ['dietary_restrictions' => 'vegetarian', 'company' => 'Acme Corp'],
+                        nullable: true
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Registration successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', example: '550e8400-e29b-41d4-a716-446655440000'),
+                                new OA\Property(property: 'status', type: 'string', example: 'confirmed'),
+                                new OA\Property(property: 'quantity', type: 'integer', example: 1),
+                                new OA\Property(property: 'total_price', type: 'number', format: 'float', example: 50.00),
+                                new OA\Property(property: 'qr_code_data', type: 'string'),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Event not found or not available for public registration'),
+            new OA\Response(response: 422, description: 'Validation error or registration not open')
+        ]
+    )]
     public function register(RegisterForEventRequest $request, Event $event)
     {
         // Only allow registration for public events
@@ -111,9 +166,44 @@ class PublicRegistrationController extends Controller
         return new RegistrationResource($registration->load(['event', 'ticketType']));
     }
 
-    /**
-     * View registration by UUID (for guests).
-     */
+    #[OA\Get(
+        path: '/public/registrations/{registration}',
+        tags: ['Public Events'],
+        summary: 'View registration details',
+        description: 'View registration details by UUID. No authentication required - useful for guests to view their registration.',
+        parameters: [
+            new OA\Parameter(
+                name: 'registration',
+                in: 'path',
+                required: true,
+                description: 'Registration UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Registration details',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', example: '550e8400-e29b-41d4-a716-446655440000'),
+                                new OA\Property(property: 'status', type: 'string', example: 'confirmed'),
+                                new OA\Property(property: 'quantity', type: 'integer', example: 1),
+                                new OA\Property(property: 'total_price', type: 'number', format: 'float', example: 50.00),
+                                new OA\Property(property: 'qr_code_data', type: 'string'),
+                                new OA\Property(property: 'is_checked_in', type: 'boolean', example: false),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Registration not found')
+        ]
+    )]
     public function show(Registration $registration)
     {
         return new RegistrationResource($registration->load(['event', 'ticketType']));

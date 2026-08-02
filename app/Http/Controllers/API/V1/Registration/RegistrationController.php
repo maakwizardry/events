@@ -11,14 +11,53 @@ use App\Models\TicketType;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class RegistrationController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * Display a listing of user's registrations.
-     */
+    #[OA\Get(
+        path: '/registrations',
+        tags: ['Registrations'],
+        summary: 'List my registrations',
+        description: 'Get all registrations for the authenticated user',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'page',
+                in: 'query',
+                description: 'Page number for pagination',
+                required: false,
+                schema: new OA\Schema(type: 'integer', example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of user registrations',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'uuid', type: 'string', example: '550e8400-e29b-41d4-a716-446655440000'),
+                                    new OA\Property(property: 'status', type: 'string', example: 'confirmed'),
+                                    new OA\Property(property: 'quantity', type: 'integer', example: 1),
+                                    new OA\Property(property: 'total_price', type: 'number', format: 'float', example: 50.00),
+                                    new OA\Property(property: 'is_checked_in', type: 'boolean', example: false),
+                                    new OA\Property(property: 'registered_at', type: 'string', format: 'date-time'),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated')
+        ]
+    )]
     public function index(Request $request)
     {
         $registrations = $request->user()
@@ -30,9 +69,61 @@ class RegistrationController extends Controller
         return RegistrationResource::collection($registrations);
     }
 
-    /**
-     * Register for an event (authenticated user).
-     */
+    #[OA\Post(
+        path: '/events/{event}/register',
+        tags: ['Registrations'],
+        summary: 'Register for event (authenticated)',
+        description: 'Register for an event as an authenticated user. User information is taken from the authenticated account.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'event',
+                in: 'path',
+                required: true,
+                description: 'Event UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['ticket_type_id'],
+                properties: [
+                    new OA\Property(property: 'ticket_type_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'quantity', type: 'integer', example: 1),
+                    new OA\Property(
+                        property: 'custom_fields',
+                        type: 'object',
+                        example: ['dietary_restrictions' => 'vegetarian', 'company' => 'Acme Corp'],
+                        nullable: true
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Registration successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string', example: '550e8400-e29b-41d4-a716-446655440000'),
+                                new OA\Property(property: 'status', type: 'string', example: 'confirmed'),
+                                new OA\Property(property: 'quantity', type: 'integer', example: 1),
+                                new OA\Property(property: 'total_price', type: 'number', format: 'float', example: 50.00),
+                                new OA\Property(property: 'qr_code_data', type: 'string'),
+                            ]
+                        ),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 422, description: 'Validation error or registration not open')
+        ]
+    )]
     public function store(RegisterForEventRequest $request, Event $event)
     {
         // Check if event allows registration
@@ -111,9 +202,36 @@ class RegistrationController extends Controller
         return new RegistrationResource($registration->load(['event', 'ticketType']));
     }
 
-    /**
-     * Display the specified registration.
-     */
+    #[OA\Get(
+        path: '/registrations/{registration}',
+        tags: ['Registrations'],
+        summary: 'Get my registration details',
+        description: 'Get details of a specific registration. Users can only view their own registrations.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'registration',
+                in: 'path',
+                required: true,
+                description: 'Registration UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Registration details',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Unauthorized - not your registration'),
+            new OA\Response(response: 404, description: 'Registration not found')
+        ]
+    )]
     public function show(Request $request, Registration $registration)
     {
         // User can only view their own registrations
@@ -126,9 +244,36 @@ class RegistrationController extends Controller
         return new RegistrationResource($registration->load(['event', 'ticketType']));
     }
 
-    /**
-     * Cancel a registration.
-     */
+    #[OA\Post(
+        path: '/registrations/{registration}/cancel',
+        tags: ['Registrations'],
+        summary: 'Cancel my registration',
+        description: 'Cancel a registration. Users can only cancel their own registrations. Frees up capacity for others.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'registration',
+                in: 'path',
+                required: true,
+                description: 'Registration UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Registration cancelled successfully',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Registration cancelled successfully'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Unauthorized - not your registration'),
+            new OA\Response(response: 422, description: 'Registration is already cancelled')
+        ]
+    )]
     public function cancel(Request $request, Registration $registration)
     {
         // User can only cancel their own registrations

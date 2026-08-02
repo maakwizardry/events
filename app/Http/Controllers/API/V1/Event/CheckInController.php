@@ -9,14 +9,54 @@ use App\Models\Registration;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class CheckInController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * Check in an attendee by QR code.
-     */
+    #[OA\Post(
+        path: '/events/{event}/check-in',
+        tags: ['Check-In'],
+        summary: 'Check in attendee',
+        description: 'Check in an attendee using their QR code. Requires check-in permissions for the event.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'event',
+                in: 'path',
+                required: true,
+                description: 'Event UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['qr_code_data'],
+                properties: [
+                    new OA\Property(property: 'qr_code_data', type: 'string', example: 'QR_CODE_STRING'),
+                    new OA\Property(property: 'location', type: 'string', example: 'Main Entrance', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Check-in successful',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Check-in successful'),
+                        new OA\Property(property: 'registration', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Not authorized to check in attendees'),
+            new OA\Response(response: 404, description: 'Invalid QR code'),
+            new OA\Response(response: 422, description: 'Already checked in or invalid registration status')
+        ]
+    )]
     public function checkIn(Request $request, Event $event)
     {
         $this->authorize('checkIn', $event);
@@ -75,9 +115,58 @@ class CheckInController extends Controller
         ]);
     }
 
-    /**
-     * Get check-in statistics for an event.
-     */
+    #[OA\Get(
+        path: '/events/{event}/check-in/stats',
+        tags: ['Check-In'],
+        summary: 'Get check-in statistics',
+        description: 'Get comprehensive check-in statistics and analytics for an event. Requires check-in permissions.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'event',
+                in: 'path',
+                required: true,
+                description: 'Event UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Check-in statistics',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'event',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'uuid', type: 'string'),
+                                new OA\Property(property: 'name', type: 'string'),
+                                new OA\Property(property: 'starts_at', type: 'string', format: 'date-time'),
+                            ]
+                        ),
+                        new OA\Property(
+                            property: 'summary',
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'total_registrations', type: 'integer', example: 100),
+                                new OA\Property(property: 'checked_in', type: 'integer', example: 75),
+                                new OA\Property(property: 'pending_check_in', type: 'integer', example: 25),
+                                new OA\Property(property: 'waitlisted', type: 'integer', example: 10),
+                                new OA\Property(property: 'cancelled', type: 'integer', example: 5),
+                                new OA\Property(property: 'check_in_rate', type: 'number', format: 'float', example: 75.00),
+                            ]
+                        ),
+                        new OA\Property(property: 'check_ins_by_hour', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'ticket_type_breakdown', type: 'array', items: new OA\Items(type: 'object')),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Not authorized to view check-in statistics'),
+            new OA\Response(response: 404, description: 'Event not found')
+        ]
+    )]
     public function statistics(Request $request, Event $event)
     {
         $this->authorize('checkIn', $event);
@@ -139,9 +228,64 @@ class CheckInController extends Controller
         ]);
     }
 
-    /**
-     * List all registrations for an event (for organizers).
-     */
+    #[OA\Get(
+        path: '/events/{event}/registrations',
+        tags: ['Check-In'],
+        summary: 'List event registrations',
+        description: 'Get all registrations for an event with filtering and search. Requires registration management permissions.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'event',
+                in: 'path',
+                required: true,
+                description: 'Event UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+            new OA\Parameter(
+                name: 'status',
+                in: 'query',
+                description: 'Filter by registration status',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['confirmed', 'waitlisted', 'cancelled'], example: 'confirmed')
+            ),
+            new OA\Parameter(
+                name: 'checked_in',
+                in: 'query',
+                description: 'Filter by check-in status',
+                required: false,
+                schema: new OA\Schema(type: 'boolean', example: true)
+            ),
+            new OA\Parameter(
+                name: 'search',
+                in: 'query',
+                description: 'Search by attendee name or email',
+                required: false,
+                schema: new OA\Schema(type: 'string', example: 'john')
+            ),
+            new OA\Parameter(
+                name: 'page',
+                in: 'query',
+                description: 'Page number for pagination',
+                required: false,
+                schema: new OA\Schema(type: 'integer', example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'List of registrations',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Not authorized to manage registrations'),
+            new OA\Response(response: 404, description: 'Event not found')
+        ]
+    )]
     public function registrations(Request $request, Event $event)
     {
         $this->authorize('manageRegistrations', $event);
@@ -177,9 +321,56 @@ class CheckInController extends Controller
         return RegistrationResource::collection($registrations);
     }
 
-    /**
-     * Export registrations as CSV.
-     */
+    #[OA\Get(
+        path: '/events/{event}/registrations/export',
+        tags: ['Check-In'],
+        summary: 'Export registrations to CSV',
+        description: 'Export event registrations as a CSV file with filtering options. Requires registration management permissions.',
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'event',
+                in: 'path',
+                required: true,
+                description: 'Event UUID',
+                schema: new OA\Schema(type: 'string', format: 'uuid')
+            ),
+            new OA\Parameter(
+                name: 'status',
+                in: 'query',
+                description: 'Filter by registration status',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['confirmed', 'waitlisted', 'cancelled'])
+            ),
+            new OA\Parameter(
+                name: 'checked_in',
+                in: 'query',
+                description: 'Filter by check-in status',
+                required: false,
+                schema: new OA\Schema(type: 'boolean')
+            ),
+            new OA\Parameter(
+                name: 'search',
+                in: 'query',
+                description: 'Search by attendee name or email',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'CSV file download',
+                content: new OA\MediaType(
+                    mediaType: 'text/csv',
+                    schema: new OA\Schema(type: 'string', format: 'binary')
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+            new OA\Response(response: 403, description: 'Not authorized to export registrations'),
+            new OA\Response(response: 404, description: 'Event not found')
+        ]
+    )]
     public function exportCsv(Request $request, Event $event)
     {
         $this->authorize('manageRegistrations', $event);
