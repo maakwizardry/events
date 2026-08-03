@@ -856,30 +856,6 @@ SOFTWARE.
 
 ---
 
-## 🗺️ Roadmap
-
-### v1.2.0 (Upcoming)
-- [ ] Payment integration (Stripe, PayPal)
-- [ ] Event series and recurring events
-- [ ] Email campaign system for attendees
-- [ ] Custom registration form builder
-- [ ] Social media integration
-
-### v1.3.0
-- [ ] Mobile app QR scanner SDK
-- [ ] Advanced analytics dashboard
-- [ ] Multi-language support
-- [ ] Event templates
-- [ ] Webhook notifications
-
-### v2.0.0
-- [ ] GraphQL API support
-- [ ] Real-time seat selection
-- [ ] Live streaming integration
-- [ ] AI-powered event recommendations
-
----
-
 <p align="center">
   Made with ❤️ by <a href="https://github.com/maakwizardry">Maak</a>
 </p>
