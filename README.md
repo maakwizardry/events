@@ -1,4 +1,5 @@
 # Events API - Open Source Event Management Platform
+<img width="2912" height="1440" alt="MaaK" src="https://github.com/user-attachments/assets/b901a75e-4b46-4231-ad03-57eb810841b0" />
 
 <p align="center">
   <img src="https://img.shields.io/badge/Laravel-13.23.0-FF2D20?style=for-the-badge&logo=laravel" alt="Laravel">
