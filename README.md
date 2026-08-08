@@ -90,6 +90,8 @@ Perfect for developers building event platforms, community management tools, con
    ```bash
    php artisan l5-swagger:generate
    ```
+   <img width="1460" height="709" alt="image" src="https://github.com/user-attachments/assets/300b04e9-b053-4440-a43b-89230d8a48d1" />
+
 
 7. **Create storage symlink**
    ```bash
